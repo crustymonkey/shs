@@ -43,7 +43,7 @@ fn get_args() -> ArgMatches<'static> {
     let matches = App::new("shs")
         .version("0.1.0")
         .author("Jay Deiman")
-        .about("Default description")
+        .about("A very simple HTTP/1.1 sink")
         .arg(Arg::with_name("bind")
             .short("-b")
             .long("--bind")
