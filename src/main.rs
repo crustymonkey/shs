@@ -19,9 +19,11 @@ use log::{debug};
 use lib::router::Router;
 use std::io::Read;
 
-static LOGGER: GlobalLogger = GlobalLogger;
-
 struct GlobalLogger;
+
+static LOGGER: GlobalLogger = GlobalLogger;
+static mut RESPONSE: Option<String> = None;
+
 
 /// This implements the logging to stderr from the `log` crate
 impl log::Log for GlobalLogger {
@@ -69,6 +71,14 @@ fn get_args() -> ArgMatches<'static> {
             .value_name("INT")
             .help("The port to bind the server to")
         )
+        .arg(Arg::with_name("response")
+            .short("-r")
+            .long("--response")
+            .default_value("ok")
+            .takes_value(true)
+            .value_name("TEXT")
+            .help("Specify a custom response instead of the default")
+        )
         .arg_from_usage("-D, --debug 'Turn on debug output'")
         .get_matches();
 
@@ -110,8 +120,14 @@ fn index(req: &mut Request) -> IronResult<Response> {
     println!();
     println!("--");
     println!();
+    
+    // Get the value of the response from the global variable
+    let mut text = String::new();
+    unsafe {
+        text += &RESPONSE.clone().unwrap();
+    }
 
-    let response = Response::with((status::Ok, "ok"));
+    let response = Response::with((status::Ok, text));
     println!("{:?}", response);
 
     println!("----");
@@ -134,6 +150,11 @@ fn get_router() -> Router {
 fn main() {
     let args = get_args();
     setup_logging(&args);
+
+    unsafe {
+        // Set the response global
+        RESPONSE = Some(args.value_of("response").unwrap().to_string());
+    }
 
     let router = get_router();
     let bind = format!(
