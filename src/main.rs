@@ -1,13 +1,14 @@
 extern crate chrono;
 extern crate clap;
 extern crate log;
-extern crate router;
+
+mod lib;
 
 use clap::{ArgMatches, App, Arg, value_t};
 use iron::prelude::*;
 use iron::status;
 use log::{debug};
-use router::Router;
+use lib::router::Router;
 use std::io::Read;
 
 static LOGGER: GlobalLogger = GlobalLogger;
@@ -86,7 +87,7 @@ fn index(req: &mut Request) -> IronResult<Response> {
         req.remote_addr.port()
     );
 
-    println!("{} {} {}", req.version, req.method, req.url.path().join(","));
+    println!("{} {} {}", req.version, req.method, req.url.path().join("/"));
     for item in req.headers.iter() {
         print!("{:?}", item);
     }
@@ -114,10 +115,10 @@ fn index(req: &mut Request) -> IronResult<Response> {
 fn get_router() -> Router {
     let mut router = Router::new();
 
-    router.get("/", index, "root_get");
-    router.post("/", index, "root_post");
-    router.put("/", index, "root_put");
-    router.delete("/", index, "root_delete");
+    router.get("*", index);
+    router.post("*", index);
+    router.put("*", index);
+    router.delete("*", index);
 
     return router;
 }
