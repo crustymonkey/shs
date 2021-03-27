@@ -4,7 +4,15 @@ extern crate log;
 
 mod lib;
 
-use clap::{ArgMatches, App, Arg, value_t};
+use clap::{
+    ArgMatches,
+    App,
+    Arg,
+    value_t,
+    crate_name,
+    crate_version,
+    crate_description,
+};
 use iron::prelude::*;
 use iron::status;
 use log::{debug};
@@ -41,10 +49,10 @@ impl log::Log for GlobalLogger {
 
 /// Create a set of CLI args via the `clap` crate and return the matches
 fn get_args() -> ArgMatches<'static> {
-    let matches = App::new("shs")
-        .version("0.1.0")
+    let matches = App::new(crate_name!())
+        .version(crate_version!())
         .author("Jay Deiman")
-        .about("A very simple HTTP/1.1 sink")
+        .about(crate_description!())
         .arg(Arg::with_name("bind")
             .short("-b")
             .long("--bind")

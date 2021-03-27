@@ -1,8 +1,8 @@
 [package]
 name = "shs"
-version = "0.2.0"
+version = "0.2.1"
 authors = ["Jay Deiman <jay@splitstreams.com>"]
-description = "A simple HTTP sink.  This will run an http server on specified port"
+description = "A simple HTTP sink.  This will run an http server on a specified port"
 edition = "2018"
 license-file = "LICENSE.txt"
 keywords = ["http", "server", "sink"]
