@@ -15,8 +15,8 @@ use clap::{
 };
 use iron::prelude::*;
 use iron::status;
-use log::{debug};
-use lib::router::Router;
+use log::{debug, info};
+use lib::router::{Router, RunAfter};
 use std::io::Read;
 
 struct GlobalLogger;
@@ -120,18 +120,8 @@ fn index(req: &mut Request) -> IronResult<Response> {
     println!();
     println!("--");
     println!();
-    
-    // Get the value of the response from the global variable
-    let mut text = String::new();
-    unsafe {
-        text += &RESPONSE.clone().unwrap();
-    }
 
-    let response = Response::with((status::Ok, text));
-    println!("{:?}", response);
-
-    println!("----");
-    println!();
+    let response = Response::with((status::Ok, "ok"));
 
     return Ok(response);
 }
@@ -163,5 +153,10 @@ fn main() {
         value_t!(args, "port", u32).expect("Invalid value for --port"),
     );
 
-    Iron::new(router).http(bind).unwrap();   
+    let r = RunAfter::new(args.value_of("response").unwrap().to_string());
+    let mut chain = Chain::new(router);
+    chain.link_after(r);
+
+    info!("Starting server on: {}", bind);
+    Iron::new(chain).http(bind).unwrap();
 }

@@ -2,8 +2,9 @@ extern crate iron;
 
 use std::collections::HashMap;
 use iron::prelude::*;
-use iron::Handler;
-use iron::status;
+use iron::{Handler, status, AfterMiddleware, headers};
+use iron::mime::Mime;
+use iron::modifier::Modifier;
 use log::{debug};
 
 pub struct Router {
@@ -84,5 +85,34 @@ impl Handler for Router {
         debug!("Final Result: {:?}", &result);
         
         return result.unwrap();
+    }
+}
+
+pub struct RunAfter {
+    response: String,
+}
+
+impl RunAfter {
+    pub fn new(resp: String) -> Self {
+        return RunAfter{ response: resp };
+    }
+}
+
+impl AfterMiddleware for RunAfter {
+    fn after(&self, _req: &mut Request, mut resp: Response) 
+            -> IronResult<Response> {
+        let m: Mime = "text/plain; charset=utf8".parse().unwrap();
+        if resp.headers.get::<headers::ContentType>() == None {
+            resp.headers.set(headers::ContentType(m));
+        }
+
+        self.response.clone().modify(&mut resp);
+        println!("{:?}", resp);
+        println!("{}", self.response);
+        println!();
+        println!("----");
+        println!();
+
+        return Ok(resp);
     }
 }
