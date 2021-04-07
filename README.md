@@ -22,7 +22,3 @@ Bind to a different address/port:
 ```
 shs -b "192.168.0.100" -p 8080
 ```
-
-## TODO
-* Allow more options on the command line to be more dynamic in what the
-  response body contents are (just "ok" for now).
