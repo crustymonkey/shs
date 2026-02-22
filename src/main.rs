@@ -1,28 +1,44 @@
-extern crate chrono;
-extern crate clap;
-extern crate log;
+#[macro_use] extern crate clap;
+#[macro_use] extern crate log;
 
-mod lib;
+mod slib;
 
-use clap::{
-    ArgMatches,
-    App,
-    Arg,
-    value_t,
-    crate_name,
-    crate_version,
-    crate_description,
-};
+use chrono;
+use clap::Parser;
 use iron::prelude::*;
 use iron::status;
-use log::{debug, info};
-use lib::router::{Router, RunAfter};
+use slib::router::{Router, RunAfter};
 use std::io::Read;
 
 struct GlobalLogger;
 
 static LOGGER: GlobalLogger = GlobalLogger;
 static mut RESPONSE: Option<String> = None;
+
+#[derive(Parser, Debug)]
+#[command(
+    name = crate_name!(),
+    version = crate_version!(),
+    author = crate_authors!(),
+    about = crate_description!()
+)]
+struct Args {
+    /// Specify the IP to bind to for the server
+    #[arg(short, long, default_value = "127.0.0.1")]
+    bind: String,
+
+    /// The port to bind the server to
+    #[arg(short, long, default_value_t = 8000)]
+    port: u32,
+
+    /// Specify a custom response instead of the default
+    #[arg(short, long, default_value = "ok")]
+    response: String,
+
+    /// Turn on debug output
+    #[arg(short='D', long, default_value_t = false)]
+    debug: bool,
+}
 
 
 /// This implements the logging to stderr from the `log` crate
@@ -50,44 +66,13 @@ impl log::Log for GlobalLogger {
 }
 
 /// Create a set of CLI args via the `clap` crate and return the matches
-fn get_args() -> ArgMatches<'static> {
-    let matches = App::new(crate_name!())
-        .version(crate_version!())
-        .author("Jay Deiman")
-        .about(crate_description!())
-        .arg(Arg::with_name("bind")
-            .short("-b")
-            .long("--bind")
-            .default_value("127.0.0.1")
-            .takes_value(true)
-            .value_name("IP")
-            .help("Specify the IP to bind to for the server")
-        )
-        .arg(Arg::with_name("port")
-            .short("-p")
-            .long("--port")
-            .default_value("8000")
-            .takes_value(true)
-            .value_name("INT")
-            .help("The port to bind the server to")
-        )
-        .arg(Arg::with_name("response")
-            .short("-r")
-            .long("--response")
-            .default_value("ok")
-            .takes_value(true)
-            .value_name("TEXT")
-            .help("Specify a custom response instead of the default")
-        )
-        .arg_from_usage("-D, --debug 'Turn on debug output'")
-        .get_matches();
-
-    return matches;
+fn get_args() -> Args {
+    return Args::parse();
 }
 
 /// Set the global logger from the `log` crate
-fn setup_logging(args: &ArgMatches) {
-    let l = if args.is_present("debug") {
+fn setup_logging(args: &Args) {
+    let l = if args.debug {
         log::LevelFilter::Debug
     } else {
         log::LevelFilter::Info
@@ -143,17 +128,17 @@ fn main() {
 
     unsafe {
         // Set the response global
-        RESPONSE = Some(args.value_of("response").unwrap().to_string());
+        RESPONSE = Some(args.response.clone());
     }
 
     let router = get_router();
     let bind = format!(
         "{}:{}",
-        args.value_of("bind").unwrap(),
-        value_t!(args, "port", u32).expect("Invalid value for --port"),
+        args.bind,
+        args.port,
     );
 
-    let r = RunAfter::new(args.value_of("response").unwrap().to_string());
+    let r = RunAfter::new(args.response.clone());
     let mut chain = Chain::new(router);
     chain.link_after(r);
 

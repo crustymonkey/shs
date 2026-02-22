@@ -1,9 +1,9 @@
 [package]
 name = "shs"
-version = "0.2.3"
-authors = ["Jay Deiman <jay@splitstreams.com>"]
+version = "0.2.4"
+authors = ["Jay Deiman <admin@splitstreams.com>"]
 description = "A simple HTTP sink.  This will run an http server on a specified port"
-edition = "2018"
+edition = "2024"
 license-file = "LICENSE.txt"
 keywords = ["http", "server", "sink"]
 categories = ["command-line-utilities"]
@@ -11,7 +11,11 @@ categories = ["command-line-utilities"]
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-clap = "2.33.3"
-log = "0.4.14"
-chrono = "0.4.19"
-iron = "0.6.1"
+clap = { version="4", features=["derive", "cargo"] }
+log = "0.4"
+chrono = "0.4"
+iron = "0.6"
+
+[profile.dev]
+overflow-checks = true
+opt-level = 1

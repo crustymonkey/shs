@@ -1,7 +1,7 @@
 # shs:  A simple HTTP sink
 This is a very simple HTTP/1.1 server that will print out the request and the
-response (headers).  As of the first version, it will only respond at "/" and
-nothing else, but will respond for GET/POST/PUT/DELETE requests.
+response with headers.  As of the first version, it will only respond to any
+path, but will respond for GET/POST/PUT/DELETE requests.
 
 ## Usage
 This is just a matter of running `shs` and you will have a webserver bound to
