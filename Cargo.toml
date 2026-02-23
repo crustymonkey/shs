@@ -14,7 +14,7 @@ categories = ["command-line-utilities"]
 clap = { version="4", features=["derive", "cargo"] }
 log = "0.4"
 chrono = "0.4"
-iron = "0.6"
+tiny_http = "0.12"
 
 [profile.dev]
 overflow-checks = true

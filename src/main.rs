@@ -1,19 +1,15 @@
-#[macro_use] extern crate clap;
-#[macro_use] extern crate log;
-
-mod slib;
+#[macro_use]
+extern crate clap;
+#[macro_use]
+extern crate log;
 
 use chrono;
 use clap::Parser;
-use iron::prelude::*;
-use iron::status;
-use slib::router::{Router, RunAfter};
-use std::io::Read;
+use tiny_http::{Header, Request, Response, Server};
 
 struct GlobalLogger;
 
 static LOGGER: GlobalLogger = GlobalLogger;
-static mut RESPONSE: Option<String> = None;
 
 #[derive(Parser, Debug)]
 #[command(
@@ -35,13 +31,16 @@ struct Args {
     #[arg(short, long, default_value = "ok")]
     response: String,
 
+    /// Specify any response headers to include. These are in the format of
+    /// "header:value"
+    #[arg(short = 'H', long)]
+    headers: Vec<String>,
+
     /// Turn on debug output
-    #[arg(short='D', long, default_value_t = false)]
+    #[arg(short = 'D', long, default_value_t = false)]
     debug: bool,
 }
 
-
-/// This implements the logging to stderr from the `log` crate
 impl log::Log for GlobalLogger {
     fn enabled(&self, meta: &log::Metadata) -> bool {
         return meta.level() <= log::max_level();
@@ -65,12 +64,10 @@ impl log::Log for GlobalLogger {
     fn flush(&self) {}
 }
 
-/// Create a set of CLI args via the `clap` crate and return the matches
 fn get_args() -> Args {
     return Args::parse();
 }
 
-/// Set the global logger from the `log` crate
 fn setup_logging(args: &Args) {
     let l = if args.debug {
         log::LevelFilter::Debug
@@ -82,23 +79,34 @@ fn setup_logging(args: &Args) {
     log::set_max_level(l);
 }
 
-fn index(req: &mut Request) -> IronResult<Response> {
+fn handle_request(
+    mut request: Request,
+    response_body: &str,
+    response_headers: &[(String, String)],
+) {
     debug!(
-        "Got a {} request from {}:{}",
-        req.method,
-        req.remote_addr.ip(),
-        req.remote_addr.port()
+        "Got a {} request from {:?}",
+        request.method(),
+        request.remote_addr()
     );
 
-    println!("{} {} {}", req.version, req.method, req.url.path().join("/"));
-    for item in req.headers.iter() {
-        print!("{:?}", item);
+    println!(
+        "{:?} {} {}",
+        request.http_version(),
+        request.method(),
+        request.url()
+    );
+
+    for header in request.headers() {
+        print!("{}: {}\n", header.field, header.value);
     }
 
-    let mut body: String = String::new();
-    req.body.read_to_string(&mut body).unwrap();
+    let mut body = String::new();
+    if let Err(e) = request.as_reader().read_to_string(&mut body) {
+        error!("Failed to read request body: {}", e);
+    }
 
-    if body.len() > 0 {
+    if !body.is_empty() {
         println!();
         println!("{}", body);
     }
@@ -106,42 +114,55 @@ fn index(req: &mut Request) -> IronResult<Response> {
     println!("--");
     println!();
 
-    let response = Response::with((status::Ok, "ok"));
+    let response_body = response_body.to_string() + "\n";
 
-    return Ok(response);
+    let mut response = Response::from_string(&response_body)
+        .with_header(Header::from_bytes("Content-Type", "text/plain; charset=utf8").unwrap());
+
+    for (key, value) in response_headers {
+        response =
+            response.with_header(Header::from_bytes(key.as_bytes(), value.as_bytes()).unwrap());
+    }
+
+    for header in response.headers() {
+        print!("{}: {}\n", header.field, header.value);
+    }
+
+    println!("{}", &response_body);
+    println!("----");
+    println!();
+
+    if let Err(e) = request.respond(response) {
+        error!("Failed to send response: {}", e);
+    }
 }
 
-fn get_router() -> Router {
-    let mut router = Router::new();
-
-    router.get("*", index);
-    router.post("*", index);
-    router.put("*", index);
-    router.delete("*", index);
-
-    return router;
+fn parse_response_headers(headers: &[String]) -> Vec<(String, String)> {
+    headers
+        .iter()
+        .map(|header| {
+            let mut split = header.split(':');
+            let key = split.next().unwrap().trim();
+            let value = split.next().unwrap().trim();
+            (key.to_string(), value.to_string())
+        })
+        .collect()
 }
 
 fn main() {
     let args = get_args();
     setup_logging(&args);
+    debug!("Headers: {:?}", args.headers);
 
-    unsafe {
-        // Set the response global
-        RESPONSE = Some(args.response.clone());
-    }
+    let response_headers = parse_response_headers(&args.headers);
 
-    let router = get_router();
-    let bind = format!(
-        "{}:{}",
-        args.bind,
-        args.port,
-    );
-
-    let r = RunAfter::new(args.response.clone());
-    let mut chain = Chain::new(router);
-    chain.link_after(r);
+    let bind = format!("{}:{}", args.bind, args.port);
 
     info!("Starting server on: {}", bind);
-    Iron::new(chain).http(bind).unwrap();
+
+    let server = Server::http(&bind).expect("Failed to start server");
+
+    for request in server.incoming_requests() {
+        handle_request(request, &args.response, &response_headers);
+    }
 }
