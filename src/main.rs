@@ -79,60 +79,65 @@ fn setup_logging(args: &Args) {
     log::set_max_level(l);
 }
 
-fn handle_request(
-    mut request: Request,
-    response_body: &str,
-    response_headers: &[(String, String)],
-) {
+fn print_request(req: &mut Request) {
     debug!(
-        "Got a {} request from {:?}",
-        request.method(),
-        request.remote_addr()
+        "Got a {} req from {:?}",
+        req.method(),
+        req.remote_addr()
     );
 
     println!(
-        "{:?} {} {}",
-        request.http_version(),
-        request.method(),
-        request.url()
+        "HTTP/{} {} {}",
+        req.http_version(),
+        req.method(),
+        req.url()
     );
 
-    for header in request.headers() {
+    for header in req.headers() {
         print!("{}: {}\n", header.field, header.value);
     }
 
     let mut body = String::new();
-    if let Err(e) = request.as_reader().read_to_string(&mut body) {
-        error!("Failed to read request body: {}", e);
+    if let Err(e) = req.as_reader().read_to_string(&mut body) {
+        error!("Failed to read req body: {}", e);
     }
 
     if !body.is_empty() {
         println!();
         println!("{}", body);
     }
+}
+
+fn handle_request(
+    mut req: Request,
+    resp_body: &str,
+    resp_headers: &[(String, String)],
+) {
+    print_request(&mut req);
+
     println!();
     println!("--");
     println!();
 
-    let response_body = response_body.to_string() + "\n";
+    let resp_body = format!("{}\n", resp_body);
 
-    let mut response = Response::from_string(&response_body)
+    let mut resp = Response::from_string(&resp_body)
         .with_header(Header::from_bytes("Content-Type", "text/plain; charset=utf8").unwrap());
 
-    for (key, value) in response_headers {
-        response =
-            response.with_header(Header::from_bytes(key.as_bytes(), value.as_bytes()).unwrap());
+    for (key, value) in resp_headers {
+        resp =
+            resp.with_header(Header::from_bytes(key.as_bytes(), value.as_bytes()).unwrap());
     }
 
-    for header in response.headers() {
+    for header in resp.headers() {
         print!("{}: {}\n", header.field, header.value);
     }
 
-    println!("{}", &response_body);
+    println!("{}", &resp_body);
     println!("----");
     println!();
 
-    if let Err(e) = request.respond(response) {
+    if let Err(e) = req.respond(resp) {
         error!("Failed to send response: {}", e);
     }
 }
