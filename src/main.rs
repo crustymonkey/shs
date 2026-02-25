@@ -80,18 +80,9 @@ fn setup_logging(args: &Args) {
 }
 
 fn print_request(req: &mut Request) {
-    debug!(
-        "Got a {} req from {:?}",
-        req.method(),
-        req.remote_addr()
-    );
+    debug!("Got a {} req from {:?}", req.method(), req.remote_addr());
 
-    println!(
-        "HTTP/{} {} {}",
-        req.http_version(),
-        req.method(),
-        req.url()
-    );
+    println!("HTTP/{} {} {}", req.http_version(), req.method(), req.url());
 
     for header in req.headers() {
         print!("{}: {}\n", header.field, header.value);
@@ -108,11 +99,7 @@ fn print_request(req: &mut Request) {
     }
 }
 
-fn handle_request(
-    mut req: Request,
-    resp_body: &str,
-    resp_headers: &[(String, String)],
-) {
+fn handle_request(mut req: Request, resp_body: &str, resp_headers: &[(String, String)]) {
     print_request(&mut req);
 
     println!();
@@ -125,8 +112,7 @@ fn handle_request(
         .with_header(Header::from_bytes("Content-Type", "text/plain; charset=utf8").unwrap());
 
     for (key, value) in resp_headers {
-        resp =
-            resp.with_header(Header::from_bytes(key.as_bytes(), value.as_bytes()).unwrap());
+        resp = resp.with_header(Header::from_bytes(key.as_bytes(), value.as_bytes()).unwrap());
     }
 
     for header in resp.headers() {
@@ -146,7 +132,7 @@ fn parse_response_headers(headers: &[String]) -> Vec<(String, String)> {
     headers
         .iter()
         .map(|header| {
-            let split: Vec<&str> = header.splitn(2,':').map(|s| s.trim()).collect();
+            let split: Vec<&str> = header.splitn(2, ':').map(|s| s.trim()).collect();
             if split.len() != 2 {
                 panic!("Invalid header format: {}", header);
             }
@@ -207,9 +193,18 @@ mod tests {
         let result = parse_response_headers(&headers);
 
         assert_eq!(result.len(), 3);
-        assert_eq!(result[0], ("Content-Type".to_string(), "application/json".to_string()));
-        assert_eq!(result[1], ("X-Custom-Header".to_string(), "custom-value".to_string()));
-        assert_eq!(result[2], ("Authorization".to_string(), "Bearer token123".to_string()));
+        assert_eq!(
+            result[0],
+            ("Content-Type".to_string(), "application/json".to_string())
+        );
+        assert_eq!(
+            result[1],
+            ("X-Custom-Header".to_string(), "custom-value".to_string())
+        );
+        assert_eq!(
+            result[2],
+            ("Authorization".to_string(), "Bearer token123".to_string())
+        );
     }
 
     #[test]
