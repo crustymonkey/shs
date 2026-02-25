@@ -274,37 +274,4 @@ mod tests {
         assert_eq!(args.headers.len(), 1);
         assert!(args.debug);
     }
-
-/*
-    #[test]
-    fn test_full_header_parsing_workflow() {
-        let raw_headers = vec![
-            "Content-Type: application/json".to_string(),
-            "Cache-Control: no-cache".to_string(),
-        ];
-
-        let parsed = parse_response_headers(&raw_headers);
-
-        assert_eq!(parsed.len(), 2);
-
-        for (key, value) in &parsed {
-            assert!(!key.is_empty());
-            assert!(!value.is_empty());
-        }
-    }
-
-    #[test]
-    fn test_args_to_bind_address_format() {
-        let args = Args {
-            bind: "192.168.1.1".to_string(),
-            port: 3000,
-            response: "test".to_string(),
-            headers: vec![],
-            debug: false,
-        };
-
-        let bind = format!("{}:{}", args.bind, args.port);
-        assert_eq!(bind, "192.168.1.1:3000");
-    }
-*/
 }
