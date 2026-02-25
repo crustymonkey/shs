@@ -146,10 +146,11 @@ fn parse_response_headers(headers: &[String]) -> Vec<(String, String)> {
     headers
         .iter()
         .map(|header| {
-            let mut split = header.split(':');
-            let key = split.next().unwrap().trim();
-            let value = split.next().unwrap().trim();
-            (key.to_string(), value.to_string())
+            let split: Vec<&str> = header.splitn(2,':').map(|s| s.trim()).collect();
+            if split.len() != 2 {
+                panic!("Invalid header format: {}", header);
+            }
+            (split[0].to_string(), split[1].to_string())
         })
         .collect()
 }
@@ -236,7 +237,7 @@ mod tests {
 
         assert_eq!(result.len(), 1);
         assert_eq!(result[0].0, "X-Timestamp");
-        assert_eq!(result[0].1, "2024");
+        assert_eq!(result[0].1, "2024:01:01:12:00:00");
     }
 
     #[test]
