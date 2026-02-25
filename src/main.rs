@@ -99,7 +99,11 @@ fn print_request(req: &mut Request) {
     }
 }
 
-fn handle_request(mut req: Request, resp_body: &str, resp_headers: &[(String, String)]) {
+fn handle_request(
+    mut req: Request,
+    resp_body: &str,
+    resp_headers: &[(String, String)],
+) {
     print_request(&mut req);
 
     println!();
@@ -108,11 +112,14 @@ fn handle_request(mut req: Request, resp_body: &str, resp_headers: &[(String, St
 
     let resp_body = format!("{}\n", resp_body);
 
-    let mut resp = Response::from_string(&resp_body)
-        .with_header(Header::from_bytes("Content-Type", "text/plain; charset=utf8").unwrap());
+    let mut resp = Response::from_string(&resp_body).with_header(
+        Header::from_bytes("Content-Type", "text/plain; charset=utf8").unwrap(),
+    );
 
     for (key, value) in resp_headers {
-        resp = resp.with_header(Header::from_bytes(key.as_bytes(), value.as_bytes()).unwrap());
+        resp = resp.with_header(
+            Header::from_bytes(key.as_bytes(), value.as_bytes()).unwrap(),
+        );
     }
 
     for header in resp.headers() {
@@ -132,7 +139,8 @@ fn parse_response_headers(headers: &[String]) -> Vec<(String, String)> {
     headers
         .iter()
         .map(|header| {
-            let split: Vec<&str> = header.splitn(2, ':').map(|s| s.trim()).collect();
+            let split: Vec<&str> =
+                header.splitn(2, ':').map(|s| s.trim()).collect();
             if split.len() != 2 {
                 panic!("Invalid header format: {}", header);
             }
