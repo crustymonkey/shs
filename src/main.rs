@@ -166,3 +166,139 @@ fn main() {
         handle_request(request, &args.response, &response_headers);
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    fn create_test_args(debug: bool) -> Args {
+        Args {
+            bind: "127.0.0.1".to_string(),
+            port: 8000,
+            response: "ok".to_string(),
+            headers: vec![],
+            debug,
+        }
+    }
+
+    #[test]
+    fn test_parse_single_header() {
+        let headers = vec!["Content-Type: application/json".to_string()];
+        let result = parse_response_headers(&headers);
+
+        assert_eq!(result.len(), 1);
+        assert_eq!(result[0].0, "Content-Type");
+        assert_eq!(result[0].1, "application/json");
+    }
+
+    #[test]
+    fn test_parse_multiple_headers() {
+        let headers = vec![
+            "Content-Type: application/json".to_string(),
+            "X-Custom-Header: custom-value".to_string(),
+            "Authorization: Bearer token123".to_string(),
+        ];
+        let result = parse_response_headers(&headers);
+
+        assert_eq!(result.len(), 3);
+        assert_eq!(result[0], ("Content-Type".to_string(), "application/json".to_string()));
+        assert_eq!(result[1], ("X-Custom-Header".to_string(), "custom-value".to_string()));
+        assert_eq!(result[2], ("Authorization".to_string(), "Bearer token123".to_string()));
+    }
+
+    #[test]
+    fn test_parse_headers_with_extra_whitespace() {
+        let headers = vec!["  Content-Type  :   text/html  ".to_string()];
+        let result = parse_response_headers(&headers);
+
+        assert_eq!(result.len(), 1);
+        assert_eq!(result[0].0, "Content-Type");
+        assert_eq!(result[0].1, "text/html");
+    }
+
+    #[test]
+    fn test_parse_empty_headers() {
+        let headers: Vec<String> = vec![];
+        let result = parse_response_headers(&headers);
+
+        assert!(result.is_empty());
+    }
+
+    #[test]
+    fn test_parse_header_with_colon_in_value() {
+        let headers = vec!["X-Timestamp: 2024:01:01:12:00:00".to_string()];
+        let result = parse_response_headers(&headers);
+
+        assert_eq!(result.len(), 1);
+        assert_eq!(result[0].0, "X-Timestamp");
+        assert_eq!(result[0].1, "2024");
+    }
+
+    #[test]
+    fn test_args_default_values() {
+        let args = create_test_args(false);
+
+        assert_eq!(args.bind, "127.0.0.1");
+        assert_eq!(args.port, 8000);
+        assert_eq!(args.response, "ok");
+        assert!(args.headers.is_empty());
+        assert!(!args.debug);
+    }
+
+    #[test]
+    fn test_args_with_debug_enabled() {
+        let args = create_test_args(true);
+
+        assert!(args.debug);
+    }
+
+    #[test]
+    fn test_args_with_custom_values() {
+        let args = Args {
+            bind: "0.0.0.0".to_string(),
+            port: 9000,
+            response: "custom response".to_string(),
+            headers: vec!["X-Test: value".to_string()],
+            debug: true,
+        };
+
+        assert_eq!(args.bind, "0.0.0.0");
+        assert_eq!(args.port, 9000);
+        assert_eq!(args.response, "custom response");
+        assert_eq!(args.headers.len(), 1);
+        assert!(args.debug);
+    }
+
+/*
+    #[test]
+    fn test_full_header_parsing_workflow() {
+        let raw_headers = vec![
+            "Content-Type: application/json".to_string(),
+            "Cache-Control: no-cache".to_string(),
+        ];
+
+        let parsed = parse_response_headers(&raw_headers);
+
+        assert_eq!(parsed.len(), 2);
+
+        for (key, value) in &parsed {
+            assert!(!key.is_empty());
+            assert!(!value.is_empty());
+        }
+    }
+
+    #[test]
+    fn test_args_to_bind_address_format() {
+        let args = Args {
+            bind: "192.168.1.1".to_string(),
+            port: 3000,
+            response: "test".to_string(),
+            headers: vec![],
+            debug: false,
+        };
+
+        let bind = format!("{}:{}", args.bind, args.port);
+        assert_eq!(bind, "192.168.1.1:3000");
+    }
+*/
+}
