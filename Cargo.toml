@@ -1,6 +1,6 @@
 [package]
 name = "shs"
-version = "0.3.0"
+version = "0.3.1"
 authors = ["Jay Deiman <admin@splitstreams.com>"]
 description = "A simple HTTP sink.  This will run an http server on a specified port"
 edition = "2024"

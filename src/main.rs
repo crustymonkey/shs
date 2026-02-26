@@ -80,24 +80,9 @@ fn setup_logging(args: &Args) {
 }
 
 fn print_request(req: &mut Request) {
-<<<<<<< HEAD
-    debug!(
-        "Got a {} req from {:?}",
-        req.method(),
-        req.remote_addr()
-    );
-
-    println!(
-        "HTTP/{} {} {}",
-        req.http_version(),
-        req.method(),
-        req.url()
-    );
-=======
     debug!("Got a {} req from {:?}", req.method(), req.remote_addr());
 
     println!("HTTP/{} {} {}", req.http_version(), req.method(), req.url());
->>>>>>> unit_tests
 
     for header in req.headers() {
         print!("{}: {}\n", header.field, header.value);
@@ -127,14 +112,6 @@ fn handle_request(
 
     let resp_body = format!("{}\n", resp_body);
 
-<<<<<<< HEAD
-    let mut resp = Response::from_string(&resp_body)
-        .with_header(Header::from_bytes("Content-Type", "text/plain; charset=utf8").unwrap());
-
-    for (key, value) in resp_headers {
-        resp =
-            resp.with_header(Header::from_bytes(key.as_bytes(), value.as_bytes()).unwrap());
-=======
     let mut resp = Response::from_string(&resp_body).with_header(
         Header::from_bytes("Content-Type", "text/plain; charset=utf8").unwrap(),
     );
@@ -143,7 +120,6 @@ fn handle_request(
         resp = resp.with_header(
             Header::from_bytes(key.as_bytes(), value.as_bytes()).unwrap(),
         );
->>>>>>> unit_tests
     }
 
     for header in resp.headers() {
