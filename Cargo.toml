@@ -7,6 +7,9 @@ edition = "2024"
 license-file = "LICENSE.txt"
 keywords = ["http", "server", "sink"]
 categories = ["command-line-utilities"]
+homepage = "https://github.com/crustymonkey/shs"
+repository = "https://github.com/crustymonkey/shs"
+readme = "README.md"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
